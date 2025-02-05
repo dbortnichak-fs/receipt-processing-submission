@@ -66,7 +66,7 @@ func TestPointsForItems(t *testing.T) {
 
 func TestPointsForItemsDescriptions(t *testing.T) {
 	items := []Item{
-		{ShortDescription: "Description1", Price: "16.0"},
+		{ShortDescription: "Description1", Price: "10.0"},
 	}
 
 	got := pointsForItemsDescriptions(items)
@@ -115,7 +115,7 @@ func TestPointsForTimeOfPurchase(t *testing.T) {
 	}
 
 	timeStr = "12:00"
-	got = pointsForOddDayPurchase(timeStr)
+	got = pointsForTimeOfPurchase(timeStr)
 	want = int64(0)
 
 	if got != want {
