@@ -1,6 +1,15 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	_ "net/http"
+	"net/http/httptest"
+	_ "net/http/httptest"
+	"path"
+	"strings"
 	"testing"
 )
 
@@ -66,7 +75,7 @@ func TestPointsForItems(t *testing.T) {
 
 func TestPointsForItemsDescriptions(t *testing.T) {
 	items := []Item{
-		{ShortDescription: "Description1", Price: "10.0"},
+		{ShortDescription: "Description1", Price: "16.0"},
 	}
 
 	got := pointsForItemsDescriptions(items)
@@ -115,10 +124,54 @@ func TestPointsForTimeOfPurchase(t *testing.T) {
 	}
 
 	timeStr = "12:00"
-	got = pointsForTimeOfPurchase(timeStr)
+	got = pointsForOddDayPurchase(timeStr)
 	want = int64(0)
 
 	if got != want {
 		t.Errorf("0 points if the time of purchase is not in the window, got %d, wanted %d", got, want)
 	}
+}
+
+func executeRequest(req *http.Request) *httptest.ResponseRecorder {
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(processPostReceipt)
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		fmt.Printf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+	return rr
+}
+
+func TestReceiptEndpoints(t *testing.T) {
+
+	filePath := path.Join("examples", "simple-receipt.json")
+	sampleData, _ := ioutil.ReadFile(filePath)
+	reader := strings.NewReader(string(sampleData))
+	req, _ := http.NewRequest("POST", "/receipts/process", reader)
+	req.Header.Add("Accept", "application/json")
+	response := executeRequest(req)
+	var m map[string]string
+	if response.Code == http.StatusOK {
+		json.Unmarshal(response.Body.Bytes(), &m)
+		if m["id"] == "" {
+			t.Errorf("Expected the 'id' key of the response to be set '%s'", m["id"])
+		} else {
+			t.Logf("Success the 'id' key of the response is present '%s'", m["id"])
+		}
+	}
+	str := []string{"", "receipts", string(m["id"]), "points", ""}
+	uri := strings.Join(str, "/")
+	req, _ = http.NewRequest("GET", uri, nil)
+	handler := http.HandlerFunc(getReceiptPoints)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+	if rr.Code == http.StatusOK {
+		json.Unmarshal(rr.Body.Bytes(), &m)
+		if m["points"] != "" {
+			fmt.Printf("Success the receipts points endpoint returned '%s'", m["points"])
+		}
+	} else {
+		t.Errorf("Expected the response to contain a receeipt")
+	}
+
 }

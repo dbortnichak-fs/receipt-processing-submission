@@ -108,7 +108,6 @@ func pointsForOddDayPurchase(dateStr string) (points int64) {
 	} else if parsedTime.Day()%2 != 0 {
 		points = 6
 	}
-	fmt.Println("Odd day points: ", points)
 	return points
 }
 
@@ -136,7 +135,6 @@ func getTotalPoints(data Receipt) (points int64) {
 	totalPoints += pointsForUsingLLM(data.Total, false)
 	totalPoints += pointsForOddDayPurchase(data.PurchaseDate)
 	totalPoints += pointsForTimeOfPurchase(data.PurchaseTime)
-	fmt.Println("Total points = ", totalPoints)
 	return totalPoints
 }
 
@@ -153,7 +151,6 @@ func processPostReceipt(w http.ResponseWriter, r *http.Request) {
 	receipt.ID = id.String()
 	receipt.Points = getTotalPoints(receipt)
 
-	fmt.Println("Generated UUID: ", id.String())
 	receiptStore[id.String()] = receipt
 
 	idResponse := IdResponse{Id: id.String()}
