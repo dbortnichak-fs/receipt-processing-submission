@@ -167,7 +167,7 @@ func TestReceiptEndpoints(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	if rr.Code == http.StatusOK {
 		json.Unmarshal(rr.Body.Bytes(), &m)
-		if m["points"] != "" {
+		if m["points"] == "31" {
 			fmt.Printf("Success the receipts points endpoint returned '%s'", m["points"])
 		}
 	} else {
